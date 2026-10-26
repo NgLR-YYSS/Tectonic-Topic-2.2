@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Volcano Eruption Laboratory</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #5c677d;
+      --panel: #ffffff;
+      --line: #d7deea;
+      --soft: #f4f7fb;
+      --accent: #c63d2f;
+      --accent-dark: #8f241c;
+      --magma: #ff8a1f;
+      --shadow: 0 14px 35px rgba(31, 45, 71, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #fff3e5 0, transparent 30%),
+        linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 22px 28px 14px;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.65rem, 3vw, 2.65rem);
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      max-width: 980px;
+      line-height: 1.45;
+    }
+
+    .app {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 8px 28px 30px;
+      display: grid;
+      grid-template-columns: minmax(270px, 330px) minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(207, 216, 230, 0.95);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      padding: 18px;
+      position: sticky;
+      top: 12px;
+      align-self: start;
+    }
+
+    .controls h2, .main h2 {
+      font-size: 1.05rem;
+      margin: 0 0 14px;
+    }
+
+    .slider-block {
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .slider-block:first-of-type { border-top: 0; padding-top: 0; }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .slider-head label { font-weight: 750; }
+    .value-pill {
+      min-width: 55px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      background: #fff1e6;
+      color: var(--accent-dark);
+      border: 1px solid #ffd7bf;
+      border-radius: 999px;
+      padding: 4px 8px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .control-note {
+      font-size: 0.78rem;
+      line-height: 1.4;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 12px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+    .primary {
+      color: white;
+      background: linear-gradient(135deg, #d54a34, #9e271e);
+      box-shadow: 0 8px 16px rgba(172, 48, 37, .24);
+    }
+
+    .secondary {
+      color: var(--ink);
+      background: #edf2f7;
+      border: 1px solid #dbe3ed;
+    }
+
+    .danger {
+      grid-column: 1 / -1;
+      color: #7a1f17;
+      background: #fff0ec;
+      border: 1px solid #f0c5bd;
+    }
+
+    .model-note {
+      margin-top: 14px;
+      padding: 11px 12px;
+      background: #fff9e9;
+      border: 1px solid #f0dfad;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      line-height: 1.4;
+      color: #6b5a21;
+    }
+
+    .main {
+      min-width: 0;
+      display: grid;
+      gap: 20px;
+    }
+
+    .sim-card { padding: 14px; }
+
+    .canvas-wrap {
+      position: relative;
+      overflow: hidden;
+      border-radius: 14px;
+      background: linear-gradient(#bfe4ff 0 56%, #d6edf8 56% 58%, #f2efe8 58%);
+      border: 1px solid #cfd8e5;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      aspect-ratio: 16 / 8.2;
+    }
+
+    .status-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 2;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(202,211,223,.95);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: .82rem;
+      font-weight: 850;
+      box-shadow: 0 5px 12px rgba(40,50,72,.09);
+    }
+
+    .eruption-counter {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 2;
+      background: rgba(23,32,51,.88);
+      color: #fff;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 15px;
+      min-height: 115px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric::after {
+      content: "";
+      position: absolute;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      right: -18px;
+      bottom: -24px;
+      background: rgba(198,61,47,.08);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .metric-value {
+      margin-top: 8px;
+      font-size: clamp(1.2rem, 2vw, 1.7rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .metric-detail {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.35;
+    }
+
+    .lower-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .95fr) minmax(0, 1.35fr);
+      gap: 20px;
+    }
+
+    .investigation, .log-card { padding: 18px; }
+
+    .investigation ol {
+      margin: 0;
+      padding-left: 20px;
+      color: #344057;
+      line-height: 1.55;
+      font-size: .92rem;
+    }
+
+    .investigation li + li { margin-top: 8px; }
+
+    .tendency {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #d9e3ee;
+      background: #f7fafc;
+    }
+
+    .tendency strong { display: block; margin-bottom: 4px; }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .small-button {
+      padding: 8px 10px;
+      font-size: .78rem;
+      background: #edf2f7;
+      border: 1px solid #d6e0eb;
+    }
+
+    .table-wrap {
+      max-height: 300px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: .78rem;
+      min-width: 700px;
+    }
+
+    th, td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e5eaf1;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f1f5f9;
+      color: #334155;
+      font-size: .73rem;
+      text-transform: uppercase;
+      letter-spacing: .045em;
+    }
+
+    tbody tr:last-child td { border-bottom: 0; }
+    .empty-row { color: var(--muted); font-style: italic; }
+
+    @media (max-width: 1050px) {
+      .app { grid-template-columns: 1fr; }
+      .controls { position: static; }
+      .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .lower-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      header, .app { padding-left: 14px; padding-right: 14px; }
+      .metrics { grid-template-columns: 1fr; }
+      .button-grid { grid-template-columns: 1fr; }
+      .danger { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Volcano Eruption Laboratory</h1>
+    <p class="subtitle">
+      Adjust lava viscosity, trapped gases and pressure. Run repeated eruptions to observe changes in lava-flow speed,
+      explosivity and the developing shape of the volcano.
+    </p>
+  </header>
+
+  <main class="app">
+    <aside class="controls card">
+      <h2>Experiment controls</h2>
+
+      <div class="slider-block">
+        <div class="slider-head">
+          <label for="viscosity">Lava viscosity</label>
+          <span id="viscosityValue" class="value-pill">45</span>
+        </div>
+        <input id="viscosity" type="range" min="0" max="100" value="45" />
+        <div class="scale"><span>Runny</span><span>Thick</span></div>
+        <div class="control-note">Higher viscosity slows lava and allows gases to remain trapped more easily.</div>
+      </div>
+
+      <div class="slider-block">
+        <div class="slider-head">
+          <label for="gas">Trapped gases</label>
+          <span id="gasValue" class="value-pill">45</span>
+        </div>
+        <input id="gas" type="range" min="0" max="100" value="45" />
+        <div class="scale"><span>Low</span><span>High</span></div>
+        <div class="control-note">More trapped gas increases the potential for fragmentation and explosive release.</div>
+      </div>
+
+      <div class="slider-block">
+        <div class="slider-head">
+          <label for="pressure">Pressure built</label>
+          <span id="pressureValue" class="value-pill">45</span>
+        </div>
+        <input id="pressure" type="range" min="0" max="100" value="45" />
+        <div class="scale"><span>Low</span><span>High</span></div>
+        <div class="control-note">Greater pressure increases eruption intensity and can drive material higher.</div>
+      </div>
+
+      <div class="button-grid">
+        <button id="eruptBtn" class="primary">Erupt once</button>
+        <button id="seriesBtn" class="secondary">Run 5 eruptions</button>
+        <button id="pauseBtn" class="secondary">Pause animation</button>
+        <button id="defaultsBtn" class="secondary">Restore settings</button>
+        <button id="resetBtn" class="danger">Reset volcano and data</button>
+      </div>
+
+      <div class="model-note">
+        <strong>Conceptual model:</strong> This classroom simulation shows general relationships rather than predicting
+        a real eruption. Real volcanoes are also affected by magma chemistry, water, conduit shape, rock strength and many other factors.
+      </div>
+    </aside>
+
+    <section class="main">
+      <div class="sim-card card">
+        <div class="canvas-wrap">
+          <div id="statusBadge" class="status-badge">Ready for an eruption</div>
+          <div id="eruptionCounter" class="eruption-counter">Eruptions: 0</div>
+          <canvas id="simCanvas" width="1200" height="615" aria-label="Animated volcano eruption simulation"></canvas>
+        </div>
+      </div>
+
+      <section class="metrics">
+        <article class="metric card">
+          <div class="metric-label">Predicted lava-flow speed</div>
+          <div id="flowMetric" class="metric-value">Moderate</div>
+          <div id="flowDetail" class="metric-detail">3.0 relative units</div>
+        </article>
+
+        <article class="metric card">
+          <div class="metric-label">Eruption explosivity</div>
+          <div id="explosiveMetric" class="metric-value">Moderate</div>
+          <div id="explosiveDetail" class="metric-detail">Conceptual index 4.0 / 8</div>
+        </article>
+
+        <article class="metric card">
+          <div class="metric-label">Likely eruption style</div>
+          <div id="styleMetric" class="metric-value">Mixed</div>
+          <div id="styleDetail" class="metric-detail">Both lava flows and fragmented material</div>
+        </article>
+
+        <article class="metric card">
+          <div class="metric-label">Volcano profile</div>
+          <div id="profileMetric" class="metric-value">Intermediate</div>
+          <div id="profileDetail" class="metric-detail">Height 155 m · base width 520 m</div>
+        </article>
+      </section>
+
+      <section class="lower-grid">
+        <article class="investigation card">
+          <h2>Student investigation</h2>
+          <ol>
+            <li>Keep gas and pressure constant. How does increasing viscosity affect lava-flow speed?</li>
+            <li>Keep viscosity constant. Which combination of gas and pressure produces the most explosive eruption?</li>
+            <li>Run five low-viscosity eruptions. Describe how the volcano changes.</li>
+            <li>Reset, then run five high-viscosity, high-gas eruptions. Compare the resulting profile.</li>
+            <li>Explain why broad shield volcanoes and steep stratovolcanoes develop different shapes.</li>
+          </ol>
+
+          <div class="tendency">
+            <strong id="tendencyTitle">Current building tendency: intermediate cone</strong>
+            <span id="tendencyText">Successive eruptions are likely to add both outward lava layers and vertical material.</span>
+          </div>
+        </article>
+
+        <article class="log-card card">
+          <div class="log-header">
+            <h2>Experiment log</h2>
+            <button id="downloadBtn" class="small-button">Download CSV</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Viscosity</th>
+                  <th>Gas</th>
+                  <th>Pressure</th>
+                  <th>Flow</th>
+                  <th>Explosivity</th>
+                  <th>Style</th>
+                  <th>Height</th>
+                  <th>Base width</th>
+                </tr>
+              </thead>
+              <tbody id="logBody">
+                <tr class="empty-row"><td colspan="9">Run an eruption to record results.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+<script>
+(() => {
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const controls = {
+    viscosity: document.getElementById('viscosity'),
+    gas: document.getElementById('gas'),
+    pressure: document.getElementById('pressure')
+  };
+
+  const values = {
+    viscosity: document.getElementById('viscosityValue'),
+    gas: document.getElementById('gasValue'),
+    pressure: document.getElementById('pressureValue')
+  };
+
+  const ui = {
+    eruptBtn: document.getElementById('eruptBtn'),
+    seriesBtn: document.getElementById('seriesBtn'),
+    pauseBtn: document.getElementById('pauseBtn'),
+    defaultsBtn: document.getElementById('defaultsBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    downloadBtn: document.getElementById('downloadBtn'),
+    statusBadge: document.getElementById('statusBadge'),
+    eruptionCounter: document.getElementById('eruptionCounter'),
+    flowMetric: document.getElementById('flowMetric'),
+    flowDetail: document.getElementById('flowDetail'),
+    explosiveMetric: document.getElementById('explosiveMetric'),
+    explosiveDetail: document.getElementById('explosiveDetail'),
+    styleMetric: document.getElementById('styleMetric'),
+    styleDetail: document.getElementById('styleDetail'),
+    profileMetric: document.getElementById('profileMetric'),
+    profileDetail: document.getElementById('profileDetail'),
+    tendencyTitle: document.getElementById('tendencyTitle'),
+    tendencyText: document.getElementById('tendencyText'),
+    logBody: document.getElementById('logBody')
+  };
+
+  const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  const state = {
+    profileHistory: [{height: 155, halfWidth: 260}],
+    eruptions: [],
+    particles: [],
+    lavaStreams: [],
+    active: false,
+    paused: false,
+    pausedAt: 0,
+    seriesRemaining: 0,
+    eruptionStart: 0,
+    eruptionDuration: 4100,
+    currentParams: null,
+    lastFrame: performance.now()
+  };
+
+  function parameters() {
+    const viscosity = Number(controls.viscosity.value);
+    const gas = Number(controls.gas.value);
+    const pressure = Number(controls.pressure.value);
+    const v = viscosity / 100;
+    const g = gas / 100;
+    const p = pressure / 100;
+
+    const flowSpeed = clamp(0.35 + (1 - v) * 5.4 + p * 0.65 - g * 0.25, 0.15, 6.5);
+    const explosiveIndex = clamp(
+      (0.34 * v + 0.42 * g + 0.34 * p + 0.42 * v * g + 0.28 * g * p - 0.13 * (1-v)) * 8,
+      0, 8
+    );
+
+    let style = 'Mixed';
+    let styleDetail = 'Both lava flows and fragmented material';
+    if (explosiveIndex < 2.6) {
+      style = 'Effusive';
+      styleDetail = 'Lava escapes relatively steadily';
+    } else if (explosiveIndex > 5.1) {
+      style = 'Explosive';
+      styleDetail = 'Rapid gas expansion fragments magma';
+    }
+
+    const broadening = 5 + flowSpeed * 5.1 + (1 - explosiveIndex / 8) * 7;
+    const verticalGrowth = 3 + v * 11 + explosiveIndex * 1.7;
+    const flowDistance = 70 + flowSpeed * 40;
+    const plumeHeight = 45 + explosiveIndex * 32 + p * 50;
+
+    return {
+      viscosity, gas, pressure, v, g, p,
+      flowSpeed, explosiveIndex, style, styleDetail,
+      broadening, verticalGrowth, flowDistance, plumeHeight
+    };
+  }
+
+  function flowLabel(x) {
+    if (x < 1.4) return 'Very slow';
+    if (x < 2.5) return 'Slow';
+    if (x < 3.8) return 'Moderate';
+    if (x < 5.2) return 'Fast';
+    return 'Very fast';
+  }
+
+  function explosiveLabel(x) {
+    if (x < 1.5) return 'Very low';
+    if (x < 3.0) return 'Low';
+    if (x < 4.8) return 'Moderate';
+    if (x < 6.4) return 'High';
+    return 'Extreme';
+  }
+
+  function profileLabel(p) {
+    const ratio = p.halfWidth / p.height;
+    if (ratio > 2.2) return 'Shield-like';
+    if (ratio < 1.35) return 'Steep stratovolcano';
+    return 'Intermediate';
+  }
+
+  function tendency(params) {
+    const broadScore = (1 - params.v) * 0.65 + (params.flowSpeed / 6.5) * 0.35;
+    const steepScore = params.v * 0.45 + (params.explosiveIndex / 8) * 0.55;
+
+    if (broadScore - steepScore > 0.18) {
+      return [
+        'Current building tendency: broad shield volcano',
+        'Fluid lava can travel farther before cooling, adding wide, gently sloping layers.'
+      ];
+    }
+    if (steepScore - broadScore > 0.18) {
+      return [
+        'Current building tendency: steep stratovolcano',
+        'Viscous lava and fragmented material accumulate closer to the vent, increasing height and slope.'
+      ];
+    }
+    return [
+      'Current building tendency: intermediate cone',
+      'Successive eruptions are likely to add both outward lava layers and vertical material.'
+    ];
+  }
+
+  function updateReadouts() {
+    const p = parameters();
+    values.viscosity.textContent = p.viscosity;
+    values.gas.textContent = p.gas;
+    values.pressure.textContent = p.pressure;
+
+    ui.flowMetric.textContent = flowLabel(p.flowSpeed);
+    ui.flowDetail.textContent = `${p.flowSpeed.toFixed(1)} relative units`;
+    ui.explosiveMetric.textContent = explosiveLabel(p.explosiveIndex);
+    ui.explosiveDetail.textContent = `Conceptual index ${p.explosiveIndex.toFixed(1)} / 8`;
+    ui.styleMetric.textContent = p.style;
+    ui.styleDetail.textContent = p.styleDetail;
+
+    const latest = state.profileHistory[state.profileHistory.length - 1];
+    ui.profileMetric.textContent = profileLabel(latest);
+    ui.profileDetail.textContent =
+      `Height ${Math.round(latest.height)} m · base width ${Math.round(latest.halfWidth * 2)} m`;
+
+    const [title, text] = tendency(p);
+    ui.tendencyTitle.textContent = title;
+    ui.tendencyText.textContent = text;
+  }
+
+  function mountainY(x, profile) {
+    const cx = canvas.width / 2;
+    const baseY = 486;
+    const dx = Math.abs(x - cx);
+    if (dx >= profile.halfWidth) return baseY;
+    const t = dx / profile.halfWidth;
+    const rounded = Math.pow(1 - t, 0.72);
+    const crater = Math.exp(-Math.pow((x - cx) / 44, 2)) * 13;
+    return baseY - profile.height * rounded + crater;
+  }
+
+  function drawSky() {
+    const g = ctx.createLinearGradient(0, 0, 0, 430);
+    g.addColorStop(0, '#bfe6ff');
+    g.addColorStop(1, '#eef8ff');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, canvas.width, 430);
+
+    ctx.fillStyle = 'rgba(255,255,255,.75)';
+    for (const c of [[150,105,55],[930,88,48],[730,145,34]]) {
+      ctx.beginPath();
+      ctx.arc(c[0], c[1], c[2]*0.52, 0, Math.PI*2);
+      ctx.arc(c[0]+c[2]*0.5, c[1]+4, c[2]*0.38, 0, Math.PI*2);
+      ctx.arc(c[0]-c[2]*0.5, c[1]+7, c[2]*0.35, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  function drawGround() {
+    ctx.fillStyle = '#694a33';
+    ctx.fillRect(0, 486, canvas.width, 129);
+
+    const soil = ctx.createLinearGradient(0, 480, 0, 615);
+    soil.addColorStop(0, '#8d6543');
+    soil.addColorStop(1, '#533823');
+    ctx.fillStyle = soil;
+    ctx.fillRect(0, 498, canvas.width, 117);
+
+    ctx.fillStyle = '#76965b';
+    ctx.fillRect(0, 480, canvas.width, 9);
+  }
+
+  function profilePath(profile) {
+    const cx = canvas.width / 2;
+    const baseY = 486;
+    ctx.beginPath();
+    ctx.moveTo(cx - profile.halfWidth, baseY);
+    for (let x = cx - profile.halfWidth; x <= cx + profile.halfWidth; x += 6) {
+      ctx.lineTo(x, mountainY(x, profile));
+    }
+    ctx.lineTo(cx + profile.halfWidth, baseY);
+    ctx.closePath();
+  }
+
+  function drawVolcanoLayers() {
+    const palette = ['#544236','#6f5745','#85674f','#9b7557','#705448','#8b6751','#5d4a3d'];
+    const newest = state.profileHistory[state.profileHistory.length - 1];
+
+    profilePath(newest);
+    const outer = ctx.createLinearGradient(0, 280, 0, 500);
+    outer.addColorStop(0, '#655044');
+    outer.addColorStop(1, '#3f332c');
+    ctx.fillStyle = outer;
+    ctx.fill();
+    ctx.strokeStyle = '#2b2522';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    for (let i = state.profileHistory.length - 2; i >= 0; i--) {
+      const profile = state.profileHistory[i];
+      profilePath(profile);
+      ctx.fillStyle = palette[i % palette.length];
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(36,28,24,.55)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    const cx = canvas.width / 2;
+    const summitY = mountainY(cx, newest);
+
+    ctx.beginPath();
+    ctx.moveTo(cx - 22, summitY + 5);
+    ctx.quadraticCurveTo(cx, summitY + 18, cx + 22, summitY + 5);
+    ctx.strokeStyle = '#1f1c1a';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(cx - 9, 486);
+    ctx.lineTo(cx - 6, summitY + 9);
+    ctx.quadraticCurveTo(cx, summitY + 2, cx + 6, summitY + 9);
+    ctx.lineTo(cx + 9, 486);
+    ctx.closePath();
+    const magmaG = ctx.createLinearGradient(cx, 486, cx, summitY);
+    magmaG.addColorStop(0, '#ff8a1e');
+    magmaG.addColorStop(1, '#ff3f1d');
+    ctx.fillStyle = magmaG;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(cx, 516, 72, 34, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ff8a1e';
+    ctx.fill();
+  }
+
+  function spawnParticle(params, progress) {
+    const latest = state.profileHistory[state.profileHistory.length - 1];
+    const cx = canvas.width / 2;
+    const summitY = mountainY(cx, latest) + 4;
+
+    if (Math.random() < params.explosiveIndex / 8 * 0.55) {
+      const angle = -Math.PI/2 + (Math.random() - .5) * 1.35;
+      const speed = 90 + params.explosiveIndex * 32 + Math.random() * 90;
+      state.particles.push({
+        x: cx + (Math.random() - .5) * 20,
+        y: summitY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 2.5 + Math.random() * 2.0,
+        age: 0,
+        r: 3 + Math.random() * 5,
+        type: Math.random() < .6 ? 'ash' : 'bomb'
+      });
+    }
+
+    if (Math.random() < 0.34 + params.p * .28 && progress < .75) {
+      state.particles.push({
+        x: cx + (Math.random() - .5) * 28,
+        y: summitY - 4,
+        vx: (Math.random() - .5) * 22,
+        vy: -35 - Math.random() * 45,
+        life: 4.0 + Math.random() * 2,
+        age: 0,
+        r: 12 + Math.random() * 22,
+        type: 'smoke'
+      });
+    }
+  }
+
+  function updateParticles(dt) {
+    for (const q of state.particles) {
+      q.age += dt;
+      q.vy += q.type === 'smoke' ? -2 : 82 * dt;
+      q.x += q.vx * dt;
+      q.y += q.vy * dt;
+      if (q.type === 'smoke') {
+        q.vx *= .994;
+        q.r += 4.5 * dt;
+      }
+    }
+    state.particles = state.particles.filter(q => q.age < q.life && q.y < 650);
+  }
+
+  function drawParticles() {
+    for (const q of state.particles) {
+      const alpha = clamp(1 - q.age / q.life, 0, 1);
+      ctx.globalAlpha = alpha;
+      if (q.type === 'smoke') {
+        ctx.fillStyle = '#6f747b';
+      } else if (q.type === 'bomb') {
+        ctx.fillStyle = '#3b3029';
+      } else {
+        ctx.fillStyle = '#6c6460';
+      }
+      ctx.beginPath();
+      ctx.arc(q.x, q.y, q.r, 0, Math.PI*2);
+      ctx.fill();
+
+      if (q.type === 'bomb') {
+        ctx.strokeStyle = '#ff6a1e';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawLava(params, progress) {
+    if (!state.active || progress < .13) return;
+
+    const latest = state.profileHistory[state.profileHistory.length - 1];
+    const cx = canvas.width / 2;
+    const summitY = mountainY(cx, latest);
+    const maxDist = params.flowDistance * clamp((progress - .13) / .75, 0, 1);
+    const sides = params.explosiveIndex > 6 ? [Math.random() > .5 ? -1 : 1] : [-1, 1];
+
+    ctx.lineCap = 'round';
+    for (const side of sides) {
+      ctx.beginPath();
+      ctx.moveTo(cx + side * 4, summitY + 5);
+      const step = 7;
+      for (let d = 0; d <= maxDist; d += step) {
+        const x = cx + side * d;
+        const y = mountainY(x, latest) + 3 + Math.sin(d * .12) * 2;
+        ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#ff3c18';
+      ctx.lineWidth = 11 - params.v * 5;
+      ctx.stroke();
+      ctx.strokeStyle = '#ffb01f';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  }
+
+  function drawPressureGlow(params, progress) {
+    if (!state.active) return;
+    const latest = state.profileHistory[state.profileHistory.length - 1];
+    const cx = canvas.width / 2;
+    const sy = mountainY(cx, latest);
+    const pulse = .55 + .45 * Math.sin(progress * Math.PI * 10);
+
+    ctx.save();
+    ctx.globalAlpha = .18 * pulse * params.p;
+    ctx.fillStyle = '#ff421a';
+    ctx.beginPath();
+    ctx.arc(cx, sy + 18, 42 + params.pressure * .22, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function updateAnimation(time) {
+    const dt = Math.min((time - state.lastFrame) / 1000, .04);
+    state.lastFrame = time;
+
+    if (!state.paused) {
+      updateParticles(dt);
+
+      if (state.active) {
+        const progress = clamp((time - state.eruptionStart) / state.eruptionDuration, 0, 1);
+        for (let i = 0; i < 2; i++) spawnParticle(state.currentParams, progress);
+
+        if (progress >= 1) {
+          finishEruption();
+        }
+      }
+    }
+
+    render(time);
+    requestAnimationFrame(updateAnimation);
+  }
+
+  function render(time) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawSky();
+    drawGround();
+    drawVolcanoLayers();
+
+    let progress = 0;
+    const animationTime = state.paused ? state.pausedAt : time;
+    if (state.active) progress = clamp((animationTime - state.eruptionStart) / state.eruptionDuration, 0, 1);
+    drawPressureGlow(state.currentParams || parameters(), progress);
+    drawLava(state.currentParams || parameters(), progress);
+    drawParticles();
+
+    const newest = state.profileHistory[state.profileHistory.length - 1];
+    ctx.fillStyle = '#2a3039';
+    ctx.font = '700 18px Segoe UI, Arial';
+    ctx.fillText(`Height: ${Math.round(newest.height)} m`, 24, 575);
+    ctx.fillText(`Base width: ${Math.round(newest.halfWidth * 2)} m`, 24, 600);
+  }
+
+  function startEruption(fromSeries = false) {
+    if (state.active) return;
+    if (!fromSeries) state.seriesRemaining = 0;
+
+    state.currentParams = parameters();
+    state.active = true;
+    state.paused = false;
+    state.pausedAt = 0;
+    state.eruptionStart = performance.now();
+    ui.pauseBtn.textContent = 'Pause animation';
+    ui.statusBadge.textContent =
+      state.currentParams.style === 'Explosive' ? 'Explosive eruption underway' :
+      state.currentParams.style === 'Effusive' ? 'Effusive eruption underway' :
+      'Mixed eruption underway';
+    ui.eruptBtn.disabled = true;
+    ui.seriesBtn.disabled = true;
+  }
+
+  function finishEruption() {
+    const p = state.currentParams;
+    const previous = state.profileHistory[state.profileHistory.length - 1];
+
+    const heightGain = p.verticalGrowth * (0.85 + Math.random() * .3);
+    const widthGain = p.broadening * (0.85 + Math.random() * .3);
+
+    const next = {
+      height: clamp(previous.height + heightGain, 155, 355),
+      halfWidth: clamp(previous.halfWidth + widthGain, 260, 480)
+    };
+
+    state.profileHistory.push(next);
+    state.eruptions.push({
+      number: state.eruptions.length + 1,
+      viscosity: p.viscosity,
+      gas: p.gas,
+      pressure: p.pressure,
+      flow: p.flowSpeed,
+      explosive: p.explosiveIndex,
+      style: p.style,
+      height: next.height,
+      width: next.halfWidth * 2
+    });
+
+    state.active = false;
+    ui.statusBadge.textContent = 'Eruption complete — profile updated';
+    ui.eruptionCounter.textContent = `Eruptions: ${state.eruptions.length}`;
+    ui.eruptBtn.disabled = false;
+    ui.seriesBtn.disabled = false;
+    updateReadouts();
+    updateLog();
+
+    if (state.seriesRemaining > 0) {
+      state.seriesRemaining--;
+      if (state.seriesRemaining > 0) {
+        ui.statusBadge.textContent = `Series running — ${state.seriesRemaining} eruptions remaining`;
+        setTimeout(() => startEruption(true), 650);
+      } else {
+        ui.statusBadge.textContent = 'Five-eruption series complete';
+      }
+    }
+  }
+
+  function runSeries() {
+    if (state.active) return;
+    state.seriesRemaining = 5;
+    startEruption(true);
+  }
+
+  function updateLog() {
+    if (state.eruptions.length === 0) {
+      ui.logBody.innerHTML = '<tr class="empty-row"><td colspan="9">Run an eruption to record results.</td></tr>';
+      return;
+    }
+
+    ui.logBody.innerHTML = state.eruptions.slice().reverse().map(r => `
+      <tr>
+        <td>${r.number}</td>
+        <td>${r.viscosity}</td>
+        <td>${r.gas}</td>
+        <td>${r.pressure}</td>
+        <td>${r.flow.toFixed(1)}</td>
+        <td>${r.explosive.toFixed(1)}</td>
+        <td>${r.style}</td>
+        <td>${Math.round(r.height)} m</td>
+        <td>${Math.round(r.width)} m</td>
+      </tr>
+    `).join('');
+  }
+
+  function resetAll() {
+    state.profileHistory = [{height: 155, halfWidth: 260}];
+    state.eruptions = [];
+    state.particles = [];
+    state.active = false;
+    state.paused = false;
+    state.pausedAt = 0;
+    state.seriesRemaining = 0;
+    state.currentParams = null;
+
+    ui.eruptBtn.disabled = false;
+    ui.seriesBtn.disabled = false;
+    ui.pauseBtn.textContent = 'Pause animation';
+    ui.statusBadge.textContent = 'Ready for an eruption';
+    ui.eruptionCounter.textContent = 'Eruptions: 0';
+    updateReadouts();
+    updateLog();
+  }
+
+  function restoreDefaults() {
+    controls.viscosity.value = 45;
+    controls.gas.value = 45;
+    controls.pressure.value = 45;
+    updateReadouts();
+  }
+
+  function togglePause() {
+    if (!state.active) {
+      ui.statusBadge.textContent = 'No eruption is currently running';
+      return;
+    }
+
+    if (!state.paused) {
+      state.paused = true;
+      state.pausedAt = performance.now();
+      ui.pauseBtn.textContent = 'Resume animation';
+      ui.statusBadge.textContent = 'Animation paused';
+    } else {
+      const now = performance.now();
+      state.eruptionStart += now - state.pausedAt;
+      state.paused = false;
+      state.pausedAt = 0;
+      ui.pauseBtn.textContent = 'Pause animation';
+      ui.statusBadge.textContent = 'Eruption resumed';
+    }
+  }
+
+  function downloadCSV() {
+    if (!state.eruptions.length) {
+      alert('Run at least one eruption before downloading the log.');
+      return;
+    }
+
+    const rows = [
+      ['Eruption','Viscosity','Trapped gases','Pressure','Flow speed','Explosivity index','Style','Height (m)','Base width (m)'],
+      ...state.eruptions.map(r => [
+        r.number, r.viscosity, r.gas, r.pressure, r.flow.toFixed(2),
+        r.explosive.toFixed(2), r.style, Math.round(r.height), Math.round(r.width)
+      ])
+    ];
+
+    const csv = rows.map(row => row.map(value => `"${String(value).replaceAll('"','""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'volcano_simulation_results.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  Object.values(controls).forEach(input => input.addEventListener('input', updateReadouts));
+  ui.eruptBtn.addEventListener('click', () => startEruption(false));
+  ui.seriesBtn.addEventListener('click', runSeries);
+  ui.pauseBtn.addEventListener('click', togglePause);
+  ui.defaultsBtn.addEventListener('click', restoreDefaults);
+  ui.resetBtn.addEventListener('click', resetAll);
+  ui.downloadBtn.addEventListener('click', downloadCSV);
+
+  updateReadouts();
+  updateLog();
+  requestAnimationFrame(updateAnimation);
+})();
+</script>
+</body>
+</html>
